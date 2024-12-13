@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Kho Lưu Trữ Văn Bản</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #f4f4f4;
+            --text-color: #333;
+            --delete-color: #e74c3c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        #text-input {
+            width: 100%;
+            min-height: 200px;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 2px solid var(--primary-color);
+            border-radius: 5px;
+            resize: vertical;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-share {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-copy {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        #shared-text {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        #share-link {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Lưu Trữ Và Chia Sẻ Văn Bản</h1>
+        
+        <textarea id="text-input" placeholder="Nhập văn bản của bạn tại đây..."></textarea>
+        
+        <div class="button-group">
+            <button class="btn btn-save" onclick="saveText()">Lưu Văn Bản</button>
+            <button class="btn btn-share" onclick="shareText()">Tạo Liên Kết Chia Sẻ</button>
+            <button class="btn btn-copy" onclick="copyShareLink()">Sao Chép Liên Kết</button>
+        </div>
+
+        <input type="text" id="share-link" readonly placeholder="Liên kết chia sẻ sẽ xuất hiện ở đây">
+        
+        <div id="shared-text"></div>
+    </div>
+
+    <script>
+        // Hàm mã hóa văn bản
+        function encodeText(text) {
+            return btoa(encodeURIComponent(text));
+        }
+
+        // Hàm giải mã văn bản
+        function decodeText(encodedText) {
+            try {
+                return decodeURIComponent(atob(encodedText));
+            } catch (error) {
+                console.error('Lỗi giải mã:', error);
+                return 'Không thể giải mã văn bản';
+            }
+        }
+
+        // Lưu văn bản
+        function saveText() {
+            const textInput = document.getElementById('text-input');
+            const text = textInput.value.trim();
+
+            if (text === '') {
+                alert('Vui lòng nhập văn bản');
+                return;
+            }
+
+            // Lưu vào localStorage
+            localStorage.setItem('savedText', text);
+            alert('Văn bản đã được lưu');
+        }
+
+        // Chia sẻ văn bản
+        function shareText() {
+            const textInput = document.getElementById('text-input');
+            const shareLink = document.getElementById('share-link');
+            const text = textInput.value.trim();
+
+            if (text === '') {
+                alert('Vui lòng nhập văn bản');
+                return;
+            }
+
+            // Mã hóa văn bản
+            const encodedText = encodeText(text);
+            
+            // Tạo liên kết chia sẻ
+            const shareUrl = `${window.location.origin}${window.location.pathname}#${encodedText}`;
+            shareLink.value = shareUrl;
+        }
+
+        // Sao chép liên kết
+        function copyShareLink() {
+            const shareLink = document.getElementById('share-link');
+            
+            if (shareLink.value) {
+                navigator.clipboard.writeText(shareLink.value).then(() => {
+                    alert('Đã sao chép liên kết');
+                });
+            } else {
+                alert('Chưa có liên kết để sao chép');
+            }
+        }
+
+        // Kiểm tra và hiển thị văn bản được chia sẻ
+        function checkSharedText() {
+            const sharedTextEl = document.getElementById('shared-text');
+            const textInput = document.getElementById('text-input');
+            
+            // Kiểm tra hash trong URL
+            const hash = window.location.hash.substring(1);
+            
+            if (hash) {
+                try {
+                    // Giải mã văn bản
+                    const decodedText = decodeText(hash);
+                    
+                    // Hiển thị văn bản được chia sẻ
+                    sharedTextEl.textContent = decodedText;
+                    textInput.value = decodedText;
+                } catch (error) {
+                    sharedTextEl.textContent = 'Không thể tải văn bản';
+                }
+            }
+        }
+
+        // Tự động kiểm tra văn bản được chia sẻ khi trang tải
+        window.onload = checkSharedText;
+    </script>
+</body>
+</html>
